@@ -2,6 +2,7 @@
 import os
 import urllib
 import urllib2
+import time
 import datetime
 import json
 # Multiprocessing pool for processing requests to casperjs
@@ -20,7 +21,11 @@ from werkzeug.contrib.fixers import ProxyFix
 from simplekv.memory import DictStore
 from flaskext.kvsession import KVSessionExtension
 
+# The directory to store logs.  Set to '' to disable
+LOG_DIR = 'results'
+# Number of multiprocessing pool workers to spawn
 POOL_WORKERS = 10
+# URL to verify captchas
 CAPTCHA_URL = 'http://www.google.com/recaptcha/api/verify'
 # Put your own CAPTCHA key in here.
 CAPTCHA_PUBLIC = os.environ.get('CAPTCHA_PUBLIC',
@@ -49,6 +54,37 @@ store = DictStore()
 app = Flask(__name__)
 KVSessionExtension(store, app)
 
+def log_job(job):
+    """ Log information about the job to keep statistics.
+        Stored in a csv file in LOG_DIR called requests.csv 
+        """
+    if LOG_DIR == '':
+        return
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
+    if not os.path.exists("%s/requests.csv" % LOG_DIR):
+        f = open("%s/requests.csv" % LOG_DIR, 'w')
+    else:
+        f = open("%s/requests.csv" % LOG_DIR, 'a')
+    f.write('%s,%s,"%s",%s,%s,%s,%s\n' % (job['time'],
+                                          job['ip'],
+                                          job['email'],
+                                          job['from'],
+                                          job['to'],
+                                          job['start'],
+                                          job['end']))
+    f.close()
+
+def log_result(log_dir, t, r):
+    """ Log each raw result for later use, if needed. """
+    if log_dir == '':
+        return
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    f = open("%s/%s.json" % (log_dir, t), 'w')
+    f.write(r)
+    f.close()
+
 def run_search(params):
     """ Run by multiprocessing to execute the search queries """
     script_path = os.path.abspath(os.path.dirname(__file__) + '/../')
@@ -66,6 +102,7 @@ def run_search(params):
         'cwd': script_path,
         }
     (o,e) = shell_exec(**shell_params)
+    log_result(params['log_dir'], params['time'], o)
     results = json.loads(o)
     for r in results:
         for entry in r:
@@ -135,14 +172,19 @@ def submit():
             return jsonify({'result': False, 'message':'Invalid Captcha. Please try entering the Captcha again.'})
     # Enqueue the request in the queue
     job = {
+        'time': long(time.time()*1000),
+        'ip': request.remote_addr,
         'from': request.form['from'],
         'to': request.form['to'],
         'start': request.form['start'],
         'end': request.form['end'],
         'email': request.form['email'],
+        # Pass these variables in since process runs in a different context
         'aws_key': AWS_KEY,
         'aws_secret': AWS_SECRET,
+        'log_dir': LOG_DIR,
         }
+    log_job(job)
     try: 
         r = pool.apply_async(run_search, [job])
         #run_search(job)
