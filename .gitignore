@@ -4,6 +4,9 @@
 \#*
 .\#*
 
+# Key file
+KEYS
+
 # OS metadata files
 .DS_Store
 .DS_Store?
