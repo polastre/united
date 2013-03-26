@@ -208,7 +208,7 @@ if __name__ == "__main__":
     # The United website is so slow, that each worker barely takes up any
     # CPU.  So start a whole bunch of listeners in the pool.
     pool = Pool(POOL_WORKERS)
-    app.debug = True
+    app.debug = False
     app.secret_key = os.urandom(24)
     app.wsgi_app = ProxyFix(app.wsgi_app)
     app.run(host='0.0.0.0')

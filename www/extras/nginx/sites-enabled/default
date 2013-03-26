@@ -33,6 +33,10 @@ server {
 		 alias /home/user/united/www/static/favicon.ico;
 	}
 
+	location /robots.txt {
+		 alias /home/user/united/www/static/robots.txt;
+	}
+
 	location / {
 		proxy_pass	http://localhost:5000;
         proxy_set_header   Host             $host;
