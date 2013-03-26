@@ -64,11 +64,10 @@ $(document).ready(function() {
 
 $("#recaptchasubmit").click(function() {
 	submitForm();
-    return false;
+	return false;
 });
 
 function jsonFlickrApi(rsp) {
-	console.log(rsp);
 	if (rsp.stat != "ok"){
 		return;
 	}
@@ -85,14 +84,12 @@ function jsonFlickrApi(rsp) {
 		}
 		count++;
 	}
-	console.log(s);
 	$('.main').css('background-image', 'url(' + s + ')');
 	$.ajax({
 		url: 'http://api.flickr.com/services/rest/?method=flickr.photos.getInfo&format=json&photo_id=' + id + '&api_key=' + flickr_public,
         dataType: 'jsonp',
 		jsonp: 'jsoncallback',
         success: function(data) {
-			console.log(data);
 			var text = '<a target="_blank" href="http://www.flickr.com/photos/' + data.photo.owner.nsid + '/' + data.photo.id + '">' + data.photo.title._content.split('(',1)[0] + '</a>' + ' by ';
 			if (data.photo.owner.realname !== '') {
 				text += data.photo.owner.realname;
@@ -101,8 +98,8 @@ function jsonFlickrApi(rsp) {
 			}
 			$("#attribution").html(text);
 			$("#attribution").show();
-        }
-    });
+		}
+	});
 }
 
 function checkInputs() {
@@ -134,13 +131,12 @@ function submitForm() {
 	$('#recaptcha').modal('hide');
 	$('#searchbutton').text('Processing...');
 	$('#searchbutton').attr('disabled', 'disabled');
-    $.ajax({
-        type: "POST",
-        url: "/submit",
-        data: $("#searchform").serialize(),
-        success: function(data)
-        {
-			//alert(data);
+	$.ajax({
+		type: "POST",
+		url: "/submit",
+		data: $("#searchform").serialize(),
+		success: function(data)
+		{
 			if (data.result) {
 				// clear dest so you can't immediately resubmit
 				$("#to").select2("val", null);
@@ -159,11 +155,11 @@ function submitForm() {
 			}
 			$('#searchbutton').text('Search');
 			$('#searchbutton').removeAttr('disabled');
-        }
-    });
+		}
+	});
 }
 
 function isEmail(email) {
-    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 	return re.test(email);
 }
