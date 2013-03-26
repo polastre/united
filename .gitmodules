@@ -1,0 +1,6 @@
+[submodule "www/static/noty"]
+	path = www/static/noty
+	url = git@github.com:needim/noty.git
+[submodule "www/static/select2"]
+	path = www/static/select2
+	url = git@github.com:ivaynberg/select2.git

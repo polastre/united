@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>United Upgrade Search Finder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+	<link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="stylesheet"/>
+    <link href="/static/select2/select2.css" rel="stylesheet"/>
+	<link href="/static/css/custom.css" rel="stylesheet"/>
+	<link href='http://fonts.googleapis.com/css?family=Days+One&text=UNITEDupgrades' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Inder' rel='stylesheet' type='text/css'>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/static/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="../assets/ico/favicon.png">
+  </head>
+
+  <body>
+
+	<form id="searchform">
+	<div class="modal hide fade" id="recaptcha">
+	  <div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		<h3>Verify that you are human</h3>
+	  </div>
+	  <div class="modal-body">
+		<script type="text/javascript"
+				src="http://www.google.com/recaptcha/api/challenge?k={{ captcha.public }}">
+		</script>
+		<noscript>
+		  <iframe src="http://www.google.com/recaptcha/api/noscript?k={{ captcha.public }}"
+				  height="300" width="500" frameborder="0"></iframe><br/>
+		  <textarea name="recaptcha_challenge_field" rows="3" cols="40">
+		  </textarea>
+		  <input type="hidden" name="recaptcha_response_field"
+				 value="manual_challenge">
+		</noscript>
+	  </div>
+	  <div class="modal-footer">
+		<a href="#" class="btn" onclick="$('#recaptcha').modal('hide');">Close</a>
+		<a href="#" id="recaptchasubmit" class="btn btn-primary">Submit</a>
+	  </div>
+	</div>
+
+    <div class="container-fluid main">
+	  <div class="logo">
+		<span class="logo1">UNITED</span><span class="logo2">upgrades</span>
+	  </div>
+	  <div id="attribution" style="display:none">
+	  </div>
+	  <div class="row-fluid">
+		<div class="span12 searchbg">
+		  <div class="row search">
+			<div class="span6" id="fromlabel">
+			  From: 
+			  <input name="from" id="from" type="hidden" style="width: 100%"/>
+			</div>
+			<div class="span6" id="tolabel">
+			  To:
+			  <input name="to" id="to" type="hidden" style="width: 100%"/>
+			</div>
+		  </div>
+		  <div class="row search">
+			<div class="span6">
+			  Start Date: 
+			  <input name="start" id="start" type="text" style="width: 90%"/>
+			</div>
+			<div class="span6">
+			  End Date:
+			  <input name="end" id="end" type="text" style="width: 90%"/>
+			</div>
+		  </div>
+		  <div class="row search">
+			<div class="span12" id="emaillabel">
+			  Email Address:
+			  <input name="email" id="email" type="text" style="width: 95%" placeholder="frank.abagnale@panam.com" onclick='$("#emaillabel").popover("hide");'/>
+			</div>
+		  </div>
+		  <div class="row search">
+			<div class="span12 div-center">
+			  <a href="#" onclick="checkInputs();" class="btn btn-warning btn-large" id="searchbutton">Search</a>
+			</div>
+		  </div>
+		</div>
+		</form>
+	  </div>
+	</div>
+	</form>
+
+    <div class="container-fluid faq">
+	  <div class="row-fluid">
+		<div class="span6">
+		  <h3>Frequently Asked Questions (FAQ)</h3>
+		  <h4>Why can you only search one-way?</h4>
+		  <p>
+			The best way to put together a successful upgrade plan for a round trip ticket is to be flexible on your dates.  By searching both directions seperately, you can pick which dates in each direction are most convenient for you to travel.  Then you can combine the results for the final ticket that you intend to book.
+		  </p>
+		  <h4>Why are the results emailed to me?</h4>
+		  <p>
+			This tool goes out to United's website and searches just like you would in your web browser.  That is a slow process, which is repeated for every day in the range you selected.  Since it takes a while, we don't want you sitting at your web browser thinking it is stuck.  Instead we email the results to you when we're finished.
+		  </p>
+		  <h4>How often can I search?</h4>
+		  <p>
+			You are allowed 10 searches each day (<a href="http://www.worldtimeserver.com/current_time_in_UTC.aspx">UTC time</a>).  This is to limit the load on United's servers and limit the load on my servers.  There is also a restriction to only allow date ranges of up to 45 days.  Again, this is to limit load and allow everyone access.
+		  </p>
+		  <h4>Why do I get no results?</h4>
+		  <p>
+			Airlines are funny companies.  The &quot;fare classes&quot; available determines whether there's an upgrade or not.  This changes by time of day, day of week, how many other customers are booked in for the flight, number of days until the flight, and probably the phase of the moon.  The <b><u>best days to look for upgrades</u></b> are in the middle of the week when fewer people are buying airline tickets.</p>
+		  <p> Keep in mind that upgrades are rarely available for peak travel periods, such as summer school vacation, unless booked exactly one year in advance.
+		  </p>
+		</div>
+		<div class="span6">
+		  <h3>Info and Legalese</h3>
+		  <h4>Who Is This For?</h4>
+		  <p>
+			United Premier 1K members, Global Services, anyone holding an upgrade certificate (Global Premier Upgrade or Regional Upgrade), or anyone that wants to use miles and cash to upgrade can find flights and dates that have <b><u>immediate upgrade availability</u></b>.  If you book a flight with immediate upgrade availability, the agent on the phone can confirm you in the next class of service immediately after booking.  You can also book online and choose to use your upgrade certificate once the ticket is issued (this can take 10-15 minutes or more).
+		  </p>
+		  <h4>How Do I Use This?</h4>
+		  <p>
+			This tool searches for <b><u>one-way</u></b> availability between the two specified airports.  It looks at every date, and determines whether immediately upgradable seats are available.  You should put your outbound flight in a one query, and then your potential return flight (and date range) as another.  When you find both outbound and return flights with upgrade availability, then go to <a href="http://www.united.com">united.com</a> and search with those specific dates.
+		  </p>
+		  <h4>No affiliation with United Airlines</h4>
+		  <p>
+		  This site is not affiliated in any way affiliated with United Airlines.  I was tired of constantly searching through United's website manually to find flights with upgrade availability.
+		  </p>
+		  <h4>Credits and Thanks</h4>
+		  <p>
+		  This site and underlying tools are built using: 
+		  <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>,
+		  <a href="http://www.flickr.com">Flickr API</a>,
+		  <a href="http://jquery.com/">jQuery and jQueryUI</a>,
+		  <a href="http://ivaynberg.github.com/select2/">Select2</a>,
+		  <a href="http://www.google.com/webfonts">Google Web Fonts</a>,
+		  <a href="http://flask.pocoo.org/">Flask</a>
+		  (with <a href="http://werkzeug.pocoo.org/">Werkzeug</a> and <a href="http://jinja.pocoo.org/docs/">Jinja 2</a>),
+		  <a href="http://phantomjs.org/">PhantomJS</a>,
+		  and
+		  <a href="http://casperjs.org/">CasperJS</a>.
+		  </p>
+		  <h4>Hosted by <a href="http://labs.alk.io">alkio labs</a>.</h4>
+		</div>
+	  </div>
+	</div>
+
+	<script type="text/javascript">
+var req_captcha = {{ captcha.require|tojson }};
+var flickr_public = '{{ flickr.public }}';
+    </script>
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/select2/select2.js"></script>
+	<script type="text/javascript" src="/static/noty/js/noty/jquery.noty.js"></script>
+	<script type="text/javascript" src="/static/noty/js/noty/layouts/top.js"></script>
+	<script type="text/javascript" src="/static/noty/js/noty/themes/default.js"></script>
+	<script src="/static/js/destinations.js"></script>
+	<script src="/static/js/custom.js"></script>
+	<script type="text/javascript" language="javascript"
+			src="http://api.flickr.com/services/rest/?method=flickr.photos.search&format=json&sort=interestingness-desc&content_type=1&media=photos&tags=travel,beach,mountain&extras=url_l&license=1,2,3,4,5,6,7&api_key={{ flickr.public }}"></script>
+  </body>
+</html>
