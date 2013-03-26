@@ -1,7 +1,10 @@
-#!/usr/bin/bash
+#!/bin/bash
 # A tool for installing all the pre-requisite components
 # git
 sudo apt-get -y install git
+
+# fonts for phantomjs
+sudo apt-get -y install libfontconfig
 
 # nginx
 sudo apt-get -y install nginx
@@ -17,7 +20,7 @@ sudo pip install Flask-KVSession
 sudo pip install boto
 
 # united code
-git clone git://github.com/polastre/united.git
+git clone --recursive git://github.com/polastre/united.git
 
 # phantomjs
 wget https://phantomjs.googlecode.com/files/phantomjs-1.9.0-linux-x86_64.tar.bz2
