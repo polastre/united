@@ -40,6 +40,10 @@ AWS_KEY = os.environ.get('AWS_KEY',
 AWS_SECRET = os.environ.get('AWS_SECRET',
                             ''
                             )
+# Google Analytics public id
+GA_PUBLIC = os.environ.get('GA_PUBLIC',
+                           ''
+                           )
 
 store = DictStore()
 app = Flask(__name__)
@@ -111,6 +115,7 @@ def index():
     # Return the index page
     return render_template('index.html',
                            flickr = { 'public': FLICKR_PUBLIC },
+                           ga = {'public': GA_PUBLIC },
                            captcha = {
             'public': CAPTCHA_PUBLIC,
             'require': session.get('captcha',False) == False,

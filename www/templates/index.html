@@ -32,6 +32,7 @@
 
   <body>
 
+	<a href="https://github.com/polastre/united"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
 	<form id="searchform">
 	<div class="modal hide fade" id="recaptcha">
 	  <div class="modal-header">
@@ -172,5 +173,14 @@ var flickr_public = '{{ flickr.public }}';
 	<script src="/static/js/custom.js"></script>
 	<script type="text/javascript" language="javascript"
 			src="http://api.flickr.com/services/rest/?method=flickr.photos.search&format=json&sort=interestingness-desc&content_type=1&media=photos&tags=travel,beach,mountain&extras=url_l&license=1,2,3,4,5,6,7&api_key={{ flickr.public }}"></script>
+	<script type="text/javascript" language="javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', '{{ ga.public }}', 'unitedupgrades.com');
+  ga('send', 'pageview');
+	</script>
   </body>
 </html>
