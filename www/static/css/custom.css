@@ -45,6 +45,10 @@
   color: #000000;
 }
 
+#searchform {
+  margin: 0;
+}
+
 .searchbg {
   padding-top: 10px;
   padding-bottom: 10px;
@@ -66,6 +70,7 @@
 
 .faq {
   background-color: #f0f0f0;
+  margin-top: -20px;
 }
 .faq p {
   font-family: 'Droid Sans', 'Arial', 'Helvetica', sans-serif;
