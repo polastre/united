@@ -68,9 +68,15 @@
   width: 550px;
 }
 
+/* ReCaptcha Iframe FIX */
+iframe {display:none !important;}
+header iframe,
+section iframe,
+footer iframe,
+div iframe { display:inline; }
+
 .faq {
   background-color: #f0f0f0;
-  margin-top: -20px;
 }
 .faq p {
   font-family: 'Droid Sans', 'Arial', 'Helvetica', sans-serif;
