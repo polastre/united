@@ -106,6 +106,10 @@ def run_search(params):
     results = json.loads(o)
     for r in results:
         for entry in r:
+            # Ignore this entry if it is an error message
+            if 'error' in entry:
+                del results[r]
+                break
             entry['prettyDate'] = datetime.datetime.strptime(entry['date'], "%m/%d/%Y").strftime("%A, %B %d, %Y")
     conn = boto.ses.connect_to_region(
         'us-east-1',

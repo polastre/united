@@ -3,7 +3,8 @@ var title = '';
 var fs = require("fs");
 var casper = require('casper').create({
 	clientScripts: [fs.workingDirectory + "/jquery-1.9.1.min.js"],
-	stepTimeout: 1000*180,
+	timeout: 1000*60*30, // 30-minute total timeout
+	onTimeout: function() { casper.echo("[{ error:'timeout'}] ]").exit(); }
 });
 var colorizer = require('colorizer').create('Colorizer');
 
