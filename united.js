@@ -1,5 +1,4 @@
 var flights = [];
-var title = '';
 var fs = require("fs");
 var casper = require('casper').create({
 	clientScripts: [fs.workingDirectory + "/jquery-1.9.1.min.js"],
@@ -18,6 +17,7 @@ var destination = casper.cli.get(1);
 var start = new Date(Date.parse(casper.cli.get(2)));
 var current = start;
 var end = new Date(Date.parse(casper.cli.get(3)));
+var total = 0;
 
 var csv = false;
 var json = false;
@@ -297,7 +297,8 @@ casper.then(function() {
 		if ((csv == false) && (json == false)) {
 			this.echo(colorizer.colorize(dateToMDY(current), "WARNING"))
 		}
-	} else{
+	} else {
+		total += 1;
 		if (csv == true) {
 			// format CSV results for up to 3 flight segments
 			for (var i=0; i < flights.length; i++) {
@@ -318,7 +319,7 @@ casper.then(function() {
 			}
 		} else if (json == true) {
 			// JSONify
-			if (current != start) {
+			if (total > 1) {
 				this.echo(",");
 			}
 			this.echo(JSON.stringify(flights));

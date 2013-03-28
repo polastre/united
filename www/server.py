@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os
+import traceback
 import urllib
 import urllib2
 import time
@@ -54,18 +55,18 @@ store = DictStore()
 app = Flask(__name__)
 KVSessionExtension(store, app)
 
-def log_job(job):
+def log_job(log_dir, job):
     """ Log information about the job to keep statistics.
         Stored in a csv file in LOG_DIR called requests.csv 
         """
-    if LOG_DIR == '':
+    if log_dir == '':
         return
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
-    if not os.path.exists("%s/requests.csv" % LOG_DIR):
-        f = open("%s/requests.csv" % LOG_DIR, 'w')
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    if not os.path.exists("%s/requests.csv" % log_dir):
+        f = open("%s/requests.csv" % log_dir, 'w')
     else:
-        f = open("%s/requests.csv" % LOG_DIR, 'a')
+        f = open("%s/requests.csv" % log_dir, 'a')
     f.write('%s,%s,"%s",%s,%s,%s,%s\n' % (job['time'],
                                           job['ip'],
                                           job['email'],
@@ -85,8 +86,37 @@ def log_result(log_dir, t, r):
     f.write(r)
     f.close()
 
+def log_error(log_dir, e):
+    """ Log an error to the error log: LOG_DIR/error.log """
+    if log_dir == '':
+        return
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    if not os.path.exists("%s/error.log" % log_dir):
+        f = open("%s/error.log" % log_dir, 'w')
+    else:
+        f = open("%s/error.log" % log_dir, 'a')
+    f.write('[%s] %s' % (str(time.time()), e))
+    f.close()
+
 def run_search(params):
-    """ Run by multiprocessing to execute the search queries """
+    """ Run by multiprocessing to execute the search queries.
+        Logs errors to LOG_DIR/error.log
+        """
+    try:
+        result = process_search(params)
+    except Exception as e:
+        log_error(params['log_dir'],
+                  "%s - %s > %s\n%s\n%s" % (params['time'],
+                                            params['from'],
+                                            params['to'],
+                                            str(e), 
+                                            traceback.format_exc()))
+        return None
+    return result
+
+def process_search(params):
+    """ Executes the actual query """
     script_path = os.path.abspath(os.path.dirname(__file__) + '/../')
     command = ['/usr/local/bin/casperjs',
                '--ignore-ssl-errors=yes',
@@ -188,7 +218,7 @@ def submit():
         'aws_secret': AWS_SECRET,
         'log_dir': LOG_DIR,
         }
-    log_job(job)
+    log_job(LOG_DIR, job)
     try: 
         r = pool.apply_async(run_search, [job])
         #run_search(job)
