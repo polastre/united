@@ -6,6 +6,17 @@
   padding-right: 0;
 }
 
+.github {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 0;
+  width: 149px;
+  height: 149px;
+  background-image: url('https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png');
+}
+
+
 .logo {
   position: absolute;
   top: 0;
