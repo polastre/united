@@ -14,6 +14,7 @@ import subprocess
 import boto.ses
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from jinja2 import Template, Environment, FileSystemLoader
 # Flask components
 from flask import Flask, jsonify, render_template, request, session
@@ -151,17 +152,30 @@ def process_search(params):
     env = Environment(loader=FileSystemLoader('templates/'))
     template = env.get_template('email.html')
     # render the email result
-    body = template.render(results = results,
-                           params = params
-                           )
-    msg = MIMEMultipart('alternative')
+    body_html = template.render(results = results,
+                                params = params
+                                )
+    template = env.get_template('email.txt')
+    body_txt = template.render(results = results,
+                               params = params
+                               )
+    # Create message container
+    msg = MIMEMultipart('related')
     msg.set_charset('UTF-8')
     msg['Subject'] = u'%s to %s (%s to %s) - Results from UnitedUpgrades.com' % (params['from'], params['to'], params['start'], params['end'])
     msg['From'] = u'United Upgrades <results@unitedupgrades.com>'
     msg['To'] = params['email']
     msg['Accept-Language'] = u'en-US'
     msg['Content-Language'] = u'en-US'
-    msg.attach(MIMEText(body, 'html'))
+    # Subcontainer contains HTML & text content
+    msg_content = MIMEMultipart('alternative')
+    msg_content.attach(MIMEText(body_txt, 'plain'))
+    msg_content.attach(MIMEText(body_html, 'html'))
+    msg.attach(msg_content)
+    # Image container contains logo, to lower spam score for ext images
+    msg_image = MIMEImage(open('static/img/unitedupgrades.gif').read(), 'gif')
+    msg_image.add_header('Content-Id', '<unitedupgrades>')
+    msg.attach(msg_image)
     r = conn.send_raw_email(source='results@unitedupgrades.com',
                             raw_message=msg.as_string(),
                             destinations=[params['email']]

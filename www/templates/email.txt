@@ -1,0 +1,22 @@
+Hello!
+
+Here are the results for your search from {{ params.from }} to {{ params.to }} between {{ params.start }} and {{ params.end }} from United Upgrades (www.unitedupgrades.com).
+
+{% if results|length == 0 -%}
+Sorry, no results were found.  Try different dates, or try searching again midweek.  If all else fails, blame the Continental merger.
+{%- endif %}
+
+{% for r in results %}{% for entry in r %}{% if loop.index0 == 0 %}{{ entry.prettyDate }}
+{% endif %}
+{{ entry.price }}
+{% for i in range(0,entry.segments|length) -%}
+{%- if i != 0 -%}
+-- connecting to --
+{%- endif %}
+{{ entry.segments[i] }}
+Depart {{ entry.departure[i] }} at {{ entry.depart_time[i] }}
+Arrive {{ entry.arrival[i] }} at {{ entry.arrive_time[i] }}
+{% endfor %}{% endfor %}{% endfor %}
+
+A service of alkio labs (http://labs.alk.io)
+
