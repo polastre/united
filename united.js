@@ -243,6 +243,7 @@ casper.thenOpen('http://www.united.com/web/en-US/apps/booking/flight/searchOW.as
 					ctl00$ContentInfo$SearchForm$Opupg$chkOPUpg: true
 				  },
 				  false);
+		this.click('#ctl00_ContentInfo_SearchForm_searchbutton');
 	} catch (err) {
 		if (retries < MAX_RETRIES) {
 			// Website returned an invalid form, restart
@@ -252,7 +253,6 @@ casper.thenOpen('http://www.united.com/web/en-US/apps/booking/flight/searchOW.as
 			this.options.onError(this, err);
 		}
 	}
-	this.click('#ctl00_ContentInfo_SearchForm_searchbutton');
 });
 
 casper.then(function() {
@@ -260,6 +260,7 @@ casper.then(function() {
 		this.fill('form#aspnetForm', 
 				  { 'ctl00$ContentInfo$ShowTrips$ShowTrip$ctl00$chkUpgrade': true },
 				  false);
+		this.click('#ctl00_ContentInfo_continuebutton');
 	} catch (err) {
 		if (retries < MAX_RETRIES) {
 			// Website returned an invalid form, restart
@@ -269,7 +270,6 @@ casper.then(function() {
 			this.options.onError(this, err);
 		}
 	}
-	this.click('#ctl00_ContentInfo_continuebutton');
 });
 
 casper.then(function() {
