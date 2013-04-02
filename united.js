@@ -1,9 +1,18 @@
 var flights = [];
 var fs = require("fs");
+var total = 0;
 var casper = require('casper').create({
 	clientScripts: [fs.workingDirectory + "/jquery-1.9.1.min.js"],
 	timeout: 1000*60*30, // 30-minute total timeout
-	onTimeout: function() { casper.echo("[{ error:'timeout'}] ]").exit(); }
+	onTimeout: function() {
+		if (total > 1) {
+			casper.echo(",")
+		}
+		casper.echo("[{ error:'timeout'}] ]").exit(); 
+	},
+	onError: function() {
+		casper.echo("]").exit();
+	}
 });
 var colorizer = require('colorizer').create('Colorizer');
 
@@ -17,7 +26,6 @@ var destination = casper.cli.get(1);
 var start = new Date(Date.parse(casper.cli.get(2)));
 var current = start;
 var end = new Date(Date.parse(casper.cli.get(3)));
-var total = 0;
 
 var csv = false;
 var json = false;
