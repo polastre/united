@@ -136,10 +136,10 @@ def process_search(params):
     log_result(params['log_dir'], params['time'], o)
     results = json.loads(o)
     for r in results:
-        for entry in r:
+        for i,entry in enumerate(r):
             # Ignore this entry if it is an error message
             if 'error' in entry:
-                del results[r]
+                del results[i]
                 break
             entry['prettyDate'] = datetime.datetime.strptime(entry['date'], "%m/%d/%Y").strftime("%A, %B %d, %Y")
     conn = boto.ses.connect_to_region(
