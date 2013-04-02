@@ -1708,6 +1708,10 @@ var destinations = [
         "id": "MSY", 
         "text": "New Orleans, LA (MSY)"
     }, 
+	{
+		"id": "NYC",
+		"text": "New York, NY (NYC - All Airports)"
+	},
     {
         "id": "JFK", 
         "text": "New York, NY (JFK)"
