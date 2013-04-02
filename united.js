@@ -12,7 +12,7 @@ var casper = require('casper').create({
 		if (total > 1) {
 			casper.echo(",")
 		}
-		casper.echo("[{ error:'timeout'}] ]").exit(); 
+		casper.echo('[{ "error":"timeout"}] ]').exit(); 
 	},
 	onError: function(self, m) {
 		if (json === true) {
