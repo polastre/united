@@ -1,6 +1,10 @@
 var flights = [];
 var fs = require("fs");
 var total = 0;
+var retries = 0;
+var MAX_RETRIES = 5;
+var csv = false;
+var json = false;
 var casper = require('casper').create({
 	clientScripts: [fs.workingDirectory + "/jquery-1.9.1.min.js"],
 	timeout: 1000*60*30, // 30-minute total timeout
@@ -10,8 +14,13 @@ var casper = require('casper').create({
 		}
 		casper.echo("[{ error:'timeout'}] ]").exit(); 
 	},
-	onError: function() {
-		casper.echo("]").exit();
+	onError: function(self, m) {
+		if (json === true) {
+			self.echo("]");
+		} else if (csv === false) {
+			self.echo("An error occurred.  Please try again.");
+		}
+		self.exit();
 	}
 });
 var colorizer = require('colorizer').create('Colorizer');
@@ -27,8 +36,6 @@ var start = new Date(Date.parse(casper.cli.get(2)));
 var current = start;
 var end = new Date(Date.parse(casper.cli.get(3)));
 
-var csv = false;
-var json = false;
 if (casper.cli.has("csv")) {
 	csv = true;
 	casper.echo('Date,Price,Flight 1,Departure,Departure Time,Arrival,Arrival Time,Flight 2,Departure,Departure Time,Arrival,Arrival Time,Flight 3,Departure,Departure Time,Arrival,Arrival Time');
@@ -228,20 +235,40 @@ casper.label("LOOP_START");
 
 casper.thenOpen('http://www.united.com/web/en-US/apps/booking/flight/searchOW.aspx?CS=N', function() {
 	// fill in form
-    this.fill('form#aspnetForm', 
-			  { ctl00$ContentInfo$SearchForm$Airports1$Origin$txtOrigin: origin,
-				ctl00$ContentInfo$SearchForm$Airports1$Destination$txtDestination: destination,
-				ctl00$ContentInfo$SearchForm$DateTimeCabin1$Depdate$txtDptDate: dateToMDY(current),
-				ctl00$ContentInfo$SearchForm$Opupg$chkOPUpg: true
-				},
-			  false);
+	try {
+		this.fill('form#aspnetForm', 
+				  { ctl00$ContentInfo$SearchForm$Airports1$Origin$txtOrigin: origin,
+					ctl00$ContentInfo$SearchForm$Airports1$Destination$txtDestination: destination,
+					ctl00$ContentInfo$SearchForm$DateTimeCabin1$Depdate$txtDptDate: dateToMDY(current),
+					ctl00$ContentInfo$SearchForm$Opupg$chkOPUpg: true
+				  },
+				  false);
+	} catch (err) {
+		if (retries < MAX_RETRIES) {
+			// Website returned an invalid form, restart
+			retries++;
+			this.goto( "LOOP_START" );
+		} else {
+			this.options.onError(this, err);
+		}
+	}
 	this.click('#ctl00_ContentInfo_SearchForm_searchbutton');
 });
 
 casper.then(function() {
-	this.fill('form#aspnetForm', 
-			  { 'ctl00$ContentInfo$ShowTrips$ShowTrip$ctl00$chkUpgrade': true },
-			  false);
+	try {
+		this.fill('form#aspnetForm', 
+				  { 'ctl00$ContentInfo$ShowTrips$ShowTrip$ctl00$chkUpgrade': true },
+				  false);
+	} catch (err) {
+		if (retries < MAX_RETRIES) {
+			// Website returned an invalid form, restart
+			retries++;
+			this.goto( "LOOP_START" );
+		} else {
+			this.options.onError(this, err);
+		}
+	}
 	this.click('#ctl00_ContentInfo_continuebutton');
 });
 
