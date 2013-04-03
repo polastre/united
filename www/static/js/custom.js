@@ -12,6 +12,7 @@ $(document).ready(function() {
 	}).datepicker("setDate", "+1w");;
 	$( "#end" ).datepicker({
 		minDate: 0,
+		maxDate: "+7w",
 		numberOfMonths: 2,
 		defaultDate: "+1w",
 		onClose: function( selectedDate ) {
@@ -43,6 +44,12 @@ $(document).ready(function() {
 	});
 	$("#to").click(function () {
 		$("#tolabel").popover('hide');
+	});
+	$("#tolabel").popover({
+		placement: 'top',
+		trigger: 'manual',
+		title: 'Maximum 45 Days',
+		content: 'The end date must be less than 45 days from the start date.'
 	});
 	$("#emaillabel").popover({
 		placement: 'bottom',
@@ -102,6 +109,11 @@ function jsonFlickrApi(rsp) {
 	});
 }
 
+function parseDate(input) {
+	var parts = input.match(/(\d+)/g);
+	return new Date(parts[2], parts[0]-1, parts[1]);
+}
+
 function checkInputs() {
 	var error = false;
 	if ($("#from").val() === '') {
@@ -111,6 +123,10 @@ function checkInputs() {
 	if ($("#to").val() === '') {
 		error = true;
 		$("#tolabel").popover('show');
+	}
+	if ((parseDate($("#end").val()) - parseDate($("#start").val()))/(1000*60*60*24) > 45) {
+		error = true;
+		$("#endlabel").popover('show');
 	}
 	if (isEmail($("#email").val()) == false) {
 		error = true;
