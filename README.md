@@ -24,6 +24,11 @@ Where options are:
 Example
 
     casperjs united.js --json SFO NRT 5/3/2013 6/1/2013
+    
+### Linux users:
+Be sure to use option `--ignore-ssl-errors=yes` when you run casperjs
+
+    casperjs --ignore-ssl-errors=yes united.js --json SFO NRT 5/3/2013 6/1/2013
 
 ## Web tool
 
