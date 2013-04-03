@@ -24,6 +24,7 @@ var casper = require('casper').create({
 	}
 });
 var colorizer = require('colorizer').create('Colorizer');
+casper.userAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.43 Safari/537.31');
 
 if (casper.cli.args.length < 4) {
 	casper.echo("syntax: united.js ORIGIN DEST START END");
