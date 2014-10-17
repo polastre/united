@@ -13,7 +13,7 @@ You will need to install:
 
 Run the tool with:
 
-    casperjs united.js [options] ORIGIN DESTINATION START END
+    casperjs --ssl-protocol=any united.js [options] ORIGIN DESTINATION START END
     
 Where options are:
 * `--json` : Output as JSON format
@@ -21,14 +21,16 @@ Where options are:
 * ORIGIN and DESTINATION should be a 3-letter airport code
 * START and END should be US-formatted dates, eg MM/DD/YYY
 
+**Note:** You must use the `--ssl-protocol=any` option to casperjs.
+
 Example
 
-    casperjs united.js --json SFO NRT 5/3/2013 6/1/2013
+    casperjs --ssl-protocol=any united.js --json SFO NRT 5/3/2013 6/1/2013
     
 ### Linux users:
 Be sure to use option `--ignore-ssl-errors=yes` when you run casperjs
 
-    casperjs --ignore-ssl-errors=yes united.js --json SFO NRT 5/3/2013 6/1/2013
+    casperjs --ignore-ssl-errors=yes --ssl-protocol=any united.js --json SFO NRT 5/3/2013 6/1/2013
 
 ## Web tool
 
