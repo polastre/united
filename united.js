@@ -237,11 +237,18 @@ casper.start();
 
 casper.label("LOOP_START");
 
+// clear cookies for each iteration
+phantom.clearCookies();
+
 casper.thenOpen('https://www.united.com/web/en-US/apps/booking/flight/searchOW.aspx?CS=N', function() {
   // uncomment for debugging output
   // var fs = require('fs');
   // fs.write('united1.html', this.page.content, 'w');
   // this.page.render('united1.png');
+
+  // double check that cookies are clear
+  phantom.clearCookies();
+
   // fill in form
   try {
     this.fill('form#aspnetForm',
