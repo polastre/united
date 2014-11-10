@@ -303,6 +303,15 @@ casper.then(function() {
 });
 
 casper.then(function() {
+  // In some environmnets the continue button doesn't appear to submit, so try again.
+  try {
+    this.click('#ctl00_ContentInfo_continuebutton');
+  } catch (err) {
+    casper.log("Step 2.5: " + err, "debug");
+  }
+});
+
+casper.then(function() {
   flights = this.evaluate(function(current_date) {
     var f = [];
     $("td.tdSegmentBlock").each(function (i, v) {
