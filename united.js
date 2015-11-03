@@ -1,425 +1,152 @@
-var flights = [];
-var fs = require("fs");
-var total = 0;
-var retries = 0;
-var MAX_RETRIES = 5;
-var csv = false;
-var json = false;
-var casper = require('casper').create({
-  // verbose: true,
-  // logLevel: "debug",
-  clientScripts: [fs.workingDirectory + "/jquery-1.9.1.min.js"],
-  timeout: 1000*60*30, // 30-minute total timeout
-  onTimeout: function() {
-    if (total > 1) {
-      casper.echo(",")
-    }
-    casper.echo('[{ "error":"timeout"}] ]').exit();
-  },
-  onError: function(self, m) {
-    if (json === true) {
-      self.echo("]");
-    } else if (csv === false) {
-      self.echo("An error occurred.  Please try again.");
-    }
-    self.exit();
-  }
-});
-var colorizer = require('colorizer').create('Colorizer');
-casper.userAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36');
+var _ = require('lodash')
+var fs = require('fs')
+var request = require('request')
+var async = require ('async')
+var colors = require('colors');
+var args = process.argv.slice(2);
 
-if (casper.cli.args.length < 4) {
-  casper.echo("syntax: united.js ORIGIN DEST START END");
-  casper.exit();
+// load the default json blob
+var formData = require('./united_request.json')
+
+// these are the final result datasets
+var finalResults = []
+
+// set data based on args
+var config = {
+  origin: args[0],
+  destination: args[1],
+  start: new Date(args[2]),
+  end: new Date(args[3])
 }
 
-var origin = casper.cli.get(0);
-var destination = casper.cli.get(1);
-var start = new Date(Date.parse(casper.cli.get(2)));
-var current = start;
-var end = new Date(Date.parse(casper.cli.get(3)));
-
-if (casper.cli.has("csv")) {
-  csv = true;
-  casper.echo('Date,Price,Flight 1,Departure,Departure Time,Arrival,Arrival Time,Flight 2,Departure,Departure Time,Arrival,Arrival Time,Flight 3,Departure,Departure Time,Arrival,Arrival Time');
-} else if (casper.cli.has("json")) {
-  json = true;
-  casper.echo('[');
-} else {
-  casper.echo(origin + ' > ' + destination);
+var headers = {
+  "X-Requested-With": "XMLHttpRequest",
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36"
 }
 
-//================================================================================
-//================================================================================
-// SEE: https://github.com/yotsumoto/casperjs-goto
-//
-// Extending Casper functions for realizing label() and goto()
-//
-// Functions:
-//   checkStep()   Revised original checkStep()
-//   then()        Revised original then()
-//   label()       New function for making empty new navigation step and affixing the new label on it.
-//   goto()        New function for jumping to the labeled navigation step that is affixed by label()
-//   dumpSteps()   New function for Dump Navigation Steps. This is very helpful as a flow control debugging tool.
-//
-
-var utils = require('utils');
-var f = utils.format;
-
 /**
-* Revised checkStep() function for realizing label() and goto()
-* Every revised points are commented.
-*
-* @param  Casper    self        A self reference
-* @param  function  onComplete  An options callback to apply on completion
-*/
-casper.checkStep = function checkStep(self, onComplete) {
-  if (self.pendingWait || self.loadInProgress) {
-    return;
-  }
-  self.current = self.step;                 // Added:  New Property.  self.current is current execution step pointer
-  var step = self.steps[self.step++];
-  if (utils.isFunction(step)) {
-    self.runStep(step);
-    step.executed = true;                 // Added:  This navigation step is executed already or not.
-  } else {
-    self.result.time = new Date().getTime() - self.startTime;
-    self.log(f("Done %s steps in %dms", self.steps.length, self.result.time), "info");
-    clearInterval(self.checker);
-    self.emit('run.complete');
-    if (utils.isFunction(onComplete)) {
-      try {
-        onComplete.call(self, self);
-      } catch (err) {
-        self.log("Could not complete final step: " + err, "error");
-      }
-    } else {
-      // default behavior is to exit
-      self.exit();
-    }
-  }
-};
-
-
-/**
-* Revised then() function for realizing label() and goto()
-* Every revised points are commented.
-*
-* @param  function  step  A function to be called as a step
-* @return Casper
-*/
-casper.then = function then(step) {
-  if (!this.started) {
-    throw new CasperError("Casper not started; please use Casper#start");
-  }
-  if (!utils.isFunction(step)) {
-    throw new CasperError("You can only define a step as a function");
-  }
-  // check if casper is running
-  if (this.checker === null) {
-    // append step to the end of the queue
-    step.level = 0;
-    this.steps.push(step);
-    step.executed = false;                 // Added:  New Property. This navigation step is executed already or not.
-    this.emit('step.added', step);         // Moved:  from bottom
-  } else {
-
-    if( !this.steps[this.current].executed ) {  // Added:  Add step to this.steps only in the case of not being executed yet.
-      // insert substep a level deeper
-      try {
-        //          step.level = this.steps[this.step - 1].level + 1;   <=== Original
-        step.level = this.steps[this.current].level + 1;   // Changed:  (this.step-1) is not always current navigation step
-      } catch (e) {
-        step.level = 0;
-      }
-      var insertIndex = this.step;
-      while (this.steps[insertIndex] && step.level === this.steps[insertIndex].level) {
-        insertIndex++;
-      }
-      this.steps.splice(insertIndex, 0, step);
-      step.executed = false;                    // Added:  New Property. This navigation step is executed already or not.
-      this.emit('step.added', step);            // Moved:  from bottom
-    }                                           // Added:  End of if() that is added.
-
-  }
-  //    this.emit('step.added', step);   // Move above. Because then() is not always adding step. only first execution time.
-  return this;
-};
-
-
-/**
-* Adds a new navigation step by 'then()'  with naming label
-*
-* @param    String    labelname    Label name for naming execution step
-*/
-casper.label = function label( labelname ) {
-  var step = new Function('"empty function for label: ' + labelname + ' "');   // make empty step
-  step.label = labelname;                                 // Adds new property 'label' to the step for label naming
-  this.then(step);                                        // Adds new step by then()
-};
-
-/**
-* Goto labeled navigation step
-*
-* @param    String    labelname    Label name for jumping navigation step
-*/
-casper.goto = function goto( labelname ) {
-  for( var i=0; i<this.steps.length; i++ ){         // Search for label in steps array
-    if( this.steps[i].label == labelname ) {      // found?
-      this.step = i;                              // new step pointer is set
-    }
-  }
-};
-// End of Extending Casper functions for realizing label() and goto()
-//================================================================================
-//================================================================================
-
-
-
-//================================================================================
-//================================================================================
-// Extending Casper functions for dumpSteps()
-
-/**
-* Dump Navigation Steps for debugging
-* When you call this function, you cat get current all information about CasperJS Navigation Steps
-* This is compatible with label() and goto() functions already.
-*
-* @param   Boolen   showSource    showing the source code in the navigation step?
-*
-* All step No. display is (steps array index + 1),  in order to accord with logging [info] messages.
-*
-*/
-casper.dumpSteps = function dumpSteps( showSource ) {
-  this.echo( "=========================== Dump Navigation Steps ==============================", "RED_BAR");
-  if( this.current ){ this.echo( "Current step No. = " + (this.current+1) , "INFO"); }
-  this.echo( "Next    step No. = " + (this.step+1) , "INFO");
-  this.echo( "steps.length = " + this.steps.length , "INFO");
-  this.echo( "================================================================================", "WARNING" );
-
-  for( var i=0; i<this.steps.length; i++){
-    var step  = this.steps[i];
-    var msg   = "Step: " + (i+1) + "/" + this.steps.length + "     level: " + step.level
-    if( step.executed ){ msg = msg + "     executed: " + step.executed }
-    var color = "PARAMETER";
-    if( step.label    ){ color="INFO"; msg = msg + "     label: " + step.label }
-
-    if( i == this.current ) {
-      this.echo( msg + "     <====== Current Navigation Step.", "COMMENT");
-    } else {
-      this.echo( msg, color );
-    }
-    if( showSource ) {
-      this.echo( "--------------------------------------------------------------------------------" );
-      this.echo( this.steps[i] );
-      this.echo( "================================================================================", "WARNING" );
-    }
-  }
-};
-
-// End of Extending Casper functions for dumpSteps()
-//================================================================================
-//================================================================================
-
-
-function dateToMDY(date) {
-  var d = date.getDate();
-  var m = date.getMonth() + 1;
-  var y = date.getFullYear();
-  //return '' + (m<=9 ? '0' + m : m) + '/' + (d <= 9 ? '0' + d : d) + '/' + y;
-  return '' + (m<=9 ? '0' + m : m) + '/' + d + '/' + y;
+ * Gets the right referer URL for where the XHR request is coming from
+ */
+var getReferer = function (origin, destination, dateString) {
+  return 'https://www.united.com/ual/en/us/flight-search/book-a-flight/results/rev?f=' +
+    origin +
+    '&t=' +
+    destination +
+    '&d=' +
+    dateString +
+    '&tt=1&st=bestmatches&cbm=-1&cbm2=-1&ut=MUA&sc=7&px=1&taxng=1&idx=1'
 }
 
-// United makes extensive use of cookies, enable them.
-phantom.cookiesEnabled = true;
+/**
+ * Get the URL for making the XHR request
+ */
+var getUrl = function (origin, destination, dateString) {
+  return 'https://www.united.com/ual/en/us/flight-search/book-a-flight/flightshopping/getflightresults/rev'
+}
 
-casper.start();
+/**
+ * Convert the date into a string format that can be used in requests
+ */
+var getDateString = function (date) {
+  var d = ('0' + date.getDate()).slice(-2)
+  var m = ('0' + (date.getMonth() + 1)).slice(-2)
+  var y = date.getFullYear()
+  return y + '-' + m + '-' + d
+}
 
-casper.label("LOOP_START");
+/**
+ * Clone the default data payload and set options for this search
+ */
+var setData = function (inputData, origin, destination, dateString) {
+  var data = _.cloneDeep(inputData)
+  data['Origin'] = origin
+  data['Destination'] = destination
+  data['DepartDate'] = dateString
+  data['ReturnDate'] = dateString
+  data['Trips'][0]['Origin'] = origin
+  data['Trips'][0]['Destination'] = destination
+  data['Trips'][0]['DepartDate'] = dateString
+  data['Trips'][0]['ReturnDate'] = dateString
+  return data
+}
 
-// clear cookies for each iteration
-phantom.clearCookies();
-
-casper.thenOpen('https://www.united.com/web/en-US/apps/booking/flight/searchOW.aspx?CS=N', function() {
-  // uncomment for debugging output
-  // var fs = require('fs');
-  // fs.write('united1.html', this.page.content, 'w');
-  // this.page.render('united1.png');
-
-  // double check that cookies are clear
-  phantom.clearCookies();
-
-  // fill in form
-  try {
-    this.fill('form#aspnetForm',
-    { ctl00$ContentInfo$SearchForm$Airports1$Origin$txtOrigin: origin,
-      ctl00$ContentInfo$SearchForm$Airports1$Destination$txtDestination: destination,
-      ctl00$ContentInfo$SearchForm$DateTimeCabin1$Depdate$txtDptDate: dateToMDY(current),
-      ctl00$ContentInfo$SearchForm$Opupg$chkOPUpg: 'on'
-    },
-    false);
-    this.click('#ctl00_ContentInfo_SearchForm_searchbutton');
-  } catch (err) {
-    casper.log("Step 1.0: " + err, "debug");
-    if (retries < MAX_RETRIES) {
-      // Website returned an invalid form, restart
-      retries++;
-      this.goto( "LOOP_START" );
-    } else {
-      this.options.onError(this, err);
+/**
+ * Parse the resulting data from United
+ */
+var parseResults = function (data) {
+  var upgrades = []
+  var flights = data.data['Trips'][0]['Flights']
+  for (var i = 0; i < flights.length; i++) {
+    var products = flights[i]['Products']
+    if (products[1]['UpgradeInfo'] &&
+        products[1]['UpgradeInfo']['Available'] === true &&
+        products[1]['UpgradeInfo']['Waitlisted'] === false) {
+      upgrades.push(flights[i])
     }
   }
-});
+  return upgrades
+}
 
-casper.then(function() {
-  // sometimes the click doesn't really click, so try again
-  try {
-    this.click('#ctl00_ContentInfo_SearchForm_searchbutton');
-  } catch (err) {
-    casper.log("Step 1.5: " + err, "debug");
+/**
+ * Load, process, and return results for a given date
+ */
+var loadResults = function (origin, destination, date, cb) {
+  var dateString = getDateString(date)
+  var options = {
+    url: getUrl(origin, destination, dateString),
+    headers: _.clone(headers),
+    method: 'POST'
   }
-});
-
-casper.then(function() {
-  try {
-    this.fill('form#aspnetForm',
-      { 'ctl00$ContentInfo$ShowTrips$ShowTrip$ctl00$chkUpgrade': true },
-      false);
-    this.click('#ctl00_ContentInfo_continuebutton');
-  } catch (err) {
-    // uncomment for debugging output
-    // var fs = require('fs');
-    // fs.write('united2.html', this.page.content, 'w');
-    // this.page.render('united2.png');
-    casper.log("Step 2.0: " + err, "debug");
-    if (retries < MAX_RETRIES) {
-      // Website returned an invalid form, restart
-      retries++;
-      this.goto( "LOOP_START" );
-    } else {
-      this.options.onError(this, err);
+  options.headers['Referer'] = getReferer(origin, destination, dateString)
+  data = setData(formData, origin, destination, dateString)
+  options.json = data
+  request(options, function (error, response, body) {
+    var upgrades = []
+    if (!error) {
+      // update results
+      upgrades = parseResults(body)
     }
-  }
-});
+    finalResults.push({
+      date: date,
+      upgrades: upgrades,
+      error: error
+    })
+    return cb(error)
+  })
+}
 
-casper.then(function() {
-  // In some environmnets the continue button doesn't appear to submit, so try again.
-  try {
-    this.click('#ctl00_ContentInfo_continuebutton');
-  } catch (err) {
-    casper.log("Step 2.5: " + err, "debug");
-  }
-});
+/**
+ * Helper function for async call
+ */
+var loadResultsByDate = function (date, cb) {
+  return loadResults(config.origin, config.destination, date, cb)
+}
 
-casper.then(function() {
-  flights = this.evaluate(function(current_date) {
-    var f = [];
-    $("td.tdSegmentBlock").each(function (i, v) {
-      var errors = $(v).find('.tdEquipMsg');
-      if (errors.length == 0) {
-        var f_local = {
-          price: -1,
-          segments: [],
-          depart_time: [],
-          arrive_time: [],
-          departure: [],
-          arrival: [],
-          date: current_date,
-        };
-        var segments = [];
-        $(v).find('.fResultsPrice').each(function (iter, val) {
-          if (iter == 0) {
-            f_local.price = $(val).text();
-          }
-        });
-        $(v).find('.timeDepart').each(function (iter, val) {
-          f_local.depart_time.push($(val).text());
-        });
-        $(v).find('.timeArrive').each(function (iter, val) {
-          f_local.arrive_time.push($(val).text());
-        });
-        $(v).find('.tdDepart').each(function (j, row) {
-          $(row).children().each(function (iter, val) {
-            if (iter == 3) {
-              f_local.departure.push($(val).text());
-            }
-          });
-        });
-        $(v).find('.tdArrive').each(function (j, row) {
-          $(row).children().each(function (iter, val) {
-            if (iter == 3) {
-              f_local.arrival.push($(val).text());
-            }
-          });
-        });
-        $(v).find('.tdSegmentDtl').each(function (iter, val) {
-          $(val).children().each(function(j, w) {
-            if (j == 0) {
-              f_local.segments.push($(w).text().replace('Flight: ',''));
-            }
-          });
-        });
-        f.push(f_local);
-      }
-    });
-    return f;
-  }, dateToMDY(current));
-});
-
-casper.then(function() {
-  if (flights.length == 0) {
-    if ((csv == false) && (json == false)) {
-      this.echo(colorizer.colorize(dateToMDY(current), "WARNING"))
-    }
+/**
+ * Pretty print the results so that they are human readable
+ */
+var printResults = function (result) {
+  console.log('==============================')
+  if (result.upgrades.length > 0) {
+    console.log(getDateString(result.date).green.bold)
   } else {
-    total += 1;
-    if (csv == true) {
-      // format CSV results for up to 3 flight segments
-      for (var i=0; i < flights.length; i++) {
-        var output = '' + dateToMDY(current) + ',"' + flights[i].price + '"';
-        for (var j=0; j < 3; j++) {
-          if (typeof(flights[i].segments[j]) === "undefined") {
-            output += ',,,,,';
-          }
-          else {
-            output += ',' + flights[i].segments[j] + ',';
-            output += '"' + flights[i].departure[j] + '",';
-            output += flights[i].depart_time[j] + ',';
-            output += '"' + flights[i].arrival[j] + '",';
-            output += flights[i].arrive_time[j];
-          }
-        }
-        this.echo(output);
-      }
-    } else if (json == true) {
-      // JSONify
-      if (total > 1) {
-        this.echo(",");
-      }
-      this.echo(JSON.stringify(flights));
-    } else {
-      // Human readable output
-      this.echo(colorizer.colorize(dateToMDY(current), "INFO"))
-      for (var i=0; i < flights.length; i++) {
-        this.echo(flights[i].price);
-        for (var j=0; j < flights[i].segments.length; j++) {
-          this.echo(flights[i].segments[j] + ' ' + flights[i].depart_time[j] + ' > ' + flights[i].arrive_time[j]);
-          this.echo(flights[i].departure[j] + ' > ' + flights[i].arrival[j]);
-        }
-        this.echo('------------------------------');
-      }
-    }
+    console.log(getDateString(result.date).red.bold)
   }
-});
-
-casper.then(function() {
-  current = new Date(current.getTime() + 86400000);
-  if( current.getTime() <= end.getTime() ){ this.goto( "LOOP_START" ); }
-});
-
-casper.run(function() {
-  if (json == true) {
-    this.echo(']');
+  var templateFile = fs.readFileSync('united_template.ejs')
+  var template = _.template(templateFile)
+  for (var i = 0; i < result.upgrades.length; i++) {
+    console.log(template({ data: result.upgrades[i] }))
   }
-  this.exit();
-});
+}
+
+var dates = []
+for (var d = new Date(config.start); d <= config.end; d.setDate(d.getDate() + 1)) {
+  dates.push(new Date(d))
+}
+
+async.each(dates, loadResultsByDate, function (err) {
+  finalResults.sort(function (a,b) { return a.date - b.date })
+  for (var i = 0; i < finalResults.length; i++) {
+    printResults(finalResults[i])
+  }
+})

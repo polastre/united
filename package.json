@@ -1,0 +1,27 @@
+{
+  "name": "united",
+  "version": "1.0.0",
+  "description": "A tool to search for upgrades on united.com",
+  "author": "Joe Polastre <joe@polastre.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polastre/united"
+  },
+  "bugs": {
+    "url": "https://github.com/polastre/united/issues"
+  },
+  "keywords": [
+    "united",
+    "upgrades",
+    "airlines"
+  ],
+  "dependencies": {
+    "async": "1.5.x",
+    "lodash": "~3.10.1",
+    "request": "2.65.x",
+    "colors": "*"
+  },
+  "devDependencies": {
+  },
+  "license": "Apache-2.0"
+}
