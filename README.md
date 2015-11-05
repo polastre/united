@@ -5,40 +5,27 @@ A tool to find upgrade availability on United Airlines. Includes web front-end i
 
 ## united.js tool
 
-The main component is a CasperJS script that goes through the United.com search process.
+The main component is a node.js script that goes through the United.com search process.
 
-You will need to install:
-* [CasperJS](http://casperjs.org/installation.html)
-* PhantomJS (follow the instructions in CasperJS)
+Follow these steps to get started:
+
+1. Install [Node.js](https://nodejs.org)
+1. [Download this repository](https://github.com/polastre/united/archive/master.zip)
+1. Extract the zip file
+1. Open up a command shell and switch to the extracted directory
+1. Install node dependencies by typing `npm install`
 
 Run the tool with:
 
-    casperjs --ssl-protocol=any united.js [options] ORIGIN DESTINATION START END
-    
-Where options are:
-* `--json` : Output as JSON format
-* `--csv` : Output as CSV file (useful for importing to Google Docs or Excel)
-* ORIGIN and DESTINATION should be a 3-letter airport code
-* START and END should be US-formatted dates, eg MM/DD/YYY
-
-**Note:** You must use the `--ssl-protocol=any` option to casperjs.
+    node united.js ORIGIN DESTINATION START END
 
 Example
 
-    casperjs --ssl-protocol=any united.js --json SFO NRT 5/3/2013 6/1/2013
-    
-### Linux users:
-Be sure to use option `--ignore-ssl-errors=yes` when you run casperjs
-
-    casperjs --ignore-ssl-errors=yes --ssl-protocol=any united.js --json SFO NRT 5/3/2013 6/1/2013
-
-## Web tool
-
-Inside of `www/` is a Flask based web app frontend with 10 threads to run the united.js script remotely.
+    node united.js SFO TPE 5/18/2016 5/20/2016
 
 ## FAQ
 
-The relevant sections of the FAQ in [www/templates/index.html](www/templates/index.html) are copied here.
+The relevant sections of the FAQ in [2014/www/templates/index.html](2014/www/templates/index.html) are copied here.
 
 ### Why can you only search one-way?
 
@@ -52,9 +39,9 @@ Keep in mind that upgrades are rarely available for peak travel periods, such as
 
 ### Who Is This For?
 
-United Premier 1K members, Global Services, anyone holding an upgrade certificate (Global Premier Upgrade or Regional Upgrade), or anyone that wants to use miles and cash to upgrade can find flights and dates that have **immediate upgrade availability**.  If you book a flight with immediate upgrade availability, the agent on the phone can confirm you in the next class of service immediately after booking.  You can also book online and choose to use your upgrade certificate once the ticket is issued (this can take 10-15 minutes or more).
+United Premier 1K members, Global Services, anyone holding an upgrade certificate (Global Premier Upgrade or Regional Upgrade), or anyone that wants to use miles and cash to upgrade can find flights and dates that have **immediate upgrade availability**.  If you book a flight with immediate upgrade availability, the agent on the phone can confirm you in the next class of service immediately after booking.  You can also book online and choose to the flights that have a green "instant upgrade" arrow (be sure to use [Advanced Search](https://www.united.com/ual/en/us/flight-search/book-a-flight) and select the upgrade option you want).
 
 ### How Do I Use This?
 
-This tool searches for **one-way** availability between the two specified airports.  It looks at every date, and determines whether immediately upgradable seats are available.  You should put your outbound flight in a one query, and then your potential return flight (and date range) as another.  When you find both outbound and return flights with upgrade availability, then go to <a href="http://www.united.com">united.com</a> and search with those specific dates.
+This tool searches for **one-way** availability between the two specified airports.  It looks at every date, and determines whether immediately upgradable seats are available.  You should put your outbound flight in a one query, and then your potential return flight (and date range) as another.  When you find both outbound and return flights with upgrade availability, then go to [united.com](https://www.united.com/ual/en/us/flight-search/book-a-flight) and search with those specific dates.
 

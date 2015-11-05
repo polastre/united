@@ -1,0 +1,6 @@
+------------------------------
+$<%= data['PricesByColumn']['ECONOMY'] %>
+<%= data['MarketingCarrier'] %><%= data['FlightNumber'] %> <%= data['DepartTimeFormat'] %> > <%= data['DestinationTimeFormat'] %>
+<%= data['OriginDescription'] %> > <%= data['DestinationDescription'] %><% _.forEach(data['Connections'], function(connect) { %>
+<%= connect['MarketingCarrier'] %><%= connect['FlightNumber'] %> <%= connect['DepartTimeFormat'] %> > <%= connect['DestinationTimeFormat'] %>
+<%= connect['OriginDescription'] %> > <%= connect['DestinationDescription'] %><% }) %>
