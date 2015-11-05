@@ -1,5 +1,13 @@
-United Upgrades
+United Upgrades (2014 Edition)
 ======
+
+## This version is outdated and not maintained
+
+In 2015, United launched a new website which made this code
+obsolete. This code is kept here for archival purposes. Please
+use the latest release in the root of this repository.
+
+---
 
 A tool to find upgrade availability on United Airlines. Includes web front-end implementation.
 
@@ -14,7 +22,7 @@ You will need to install:
 Run the tool with:
 
     casperjs --ssl-protocol=any united.js [options] ORIGIN DESTINATION START END
-    
+
 Where options are:
 * `--json` : Output as JSON format
 * `--csv` : Output as CSV file (useful for importing to Google Docs or Excel)
@@ -26,7 +34,7 @@ Where options are:
 Example
 
     casperjs --ssl-protocol=any united.js --json SFO NRT 5/3/2013 6/1/2013
-    
+
 ### Linux users:
 Be sure to use option `--ignore-ssl-errors=yes` when you run casperjs
 
