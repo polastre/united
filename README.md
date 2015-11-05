@@ -7,7 +7,8 @@ A tool to find upgrade availability on United Airlines. Includes web front-end i
 
 The main component is a node.js script that goes through the United.com search process.
 
-Steps:
+Follow these steps to get started:
+
 1. Install [Node.js](https://nodejs.org)
 1. [Download this repository](https://github.com/polastre/united/archive/master.zip)
 1. Extract the zip file
