@@ -19,9 +19,9 @@
     "async": "1.5.x",
     "lodash": "~3.10.1",
     "request": "2.65.x",
+    "puppeteer": "0.13.x",
     "colors": "*"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "license": "Apache-2.0"
 }
