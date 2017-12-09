@@ -9,7 +9,7 @@ The main component is a node.js script that goes through the United.com search p
 
 Follow these steps to get started:
 
-1. Install [Node.js](https://nodejs.org)
+1. Install [Node.js](https://nodejs.org) v7.6.0 or greater
 1. [Download this repository](https://github.com/polastre/united/archive/master.zip)
 1. Extract the zip file
 1. Open up a command shell and switch to the extracted directory
@@ -21,7 +21,7 @@ Run the tool with:
 
 Example
 
-    node united.js SFO TPE 5/18/2016 5/20/2016
+    node united.js SFO TPE 5/18/2018 5/20/2018
 
 ## FAQ
 
@@ -44,4 +44,3 @@ United Premier 1K members, Global Services, anyone holding an upgrade certificat
 ### How Do I Use This?
 
 This tool searches for **one-way** availability between the two specified airports.  It looks at every date, and determines whether immediately upgradable seats are available.  You should put your outbound flight in a one query, and then your potential return flight (and date range) as another.  When you find both outbound and return flights with upgrade availability, then go to [united.com](https://www.united.com/ual/en/us/flight-search/book-a-flight) and search with those specific dates.
-

@@ -1,6 +1,6 @@
 {
   "name": "united",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A tool to search for upgrades on united.com",
   "author": "Joe Polastre <joe@polastre.com>",
   "repository": {
@@ -16,9 +16,7 @@
     "airlines"
   ],
   "dependencies": {
-    "async": "1.5.x",
     "lodash": "~3.10.1",
-    "request": "2.65.x",
     "puppeteer": "0.13.x",
     "colors": "*"
   },
