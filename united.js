@@ -1,83 +1,30 @@
-var _ = require('lodash')
-var fs = require('fs')
-var request = require('request')
-var async = require ('async')
-var colors = require('colors');
-var args = process.argv.slice(2);
-
-// load the default json blob
-var formData = require('./united_request.json')
-
-// these are the final result datasets
-var finalResults = []
-
-// set data based on args
-var config = {
-  origin: args[0],
-  destination: args[1],
-  start: new Date(args[2]),
-  end: new Date(args[3])
-}
-
-var headers = {
-  "X-Requested-With": "XMLHttpRequest",
-  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36"
-}
-
-/**
- * Gets the right referer URL for where the XHR request is coming from
- */
-var getReferer = function (origin, destination, dateString) {
-  return 'https://www.united.com/ual/en/us/flight-search/book-a-flight/results/rev?f=' +
-    origin +
-    '&t=' +
-    destination +
-    '&d=' +
-    dateString +
-    '&tt=1&st=bestmatches&cbm=-1&cbm2=-1&ut=MUA&sc=7&px=1&taxng=1&idx=1'
-}
-
-/**
- * Get the URL for making the XHR request
- */
-var getUrl = function (origin, destination, dateString) {
-  return 'https://www.united.com/ual/en/us/flight-search/book-a-flight/flightshopping/getflightresults/rev'
-}
+const puppeteer = require('puppeteer')
+const colors = require('colors')
+const args = process.argv.slice(2)
+const _ = require('lodash')
+const fs = require('fs')
 
 /**
  * Convert the date into a string format that can be used in requests
  */
-var getDateString = function (date) {
+function getDateString(date, separator = '/') {
   var d = ('0' + date.getDate()).slice(-2)
   var m = ('0' + (date.getMonth() + 1)).slice(-2)
   var y = date.getFullYear()
-  return y + '-' + m + '-' + d
-}
-
-/**
- * Clone the default data payload and set options for this search
- */
-var setData = function (inputData, origin, destination, dateString) {
-  var data = _.cloneDeep(inputData)
-  data['Origin'] = origin
-  data['Destination'] = destination
-  data['DepartDate'] = dateString
-  data['ReturnDate'] = dateString
-  data['Trips'][0]['Origin'] = origin
-  data['Trips'][0]['Destination'] = destination
-  data['Trips'][0]['DepartDate'] = dateString
-  data['Trips'][0]['ReturnDate'] = dateString
-  return data
+  return m + separator + d + separator + y
 }
 
 /**
  * Parse the resulting data from United
  */
-var parseResults = function (data) {
-  var upgrades = []
-  var flights = data.data['Trips'][0]['Flights']
-  for (var i = 0; i < flights.length; i++) {
-    var products = flights[i]['Products']
+function parseResults(data) {
+  let upgrades = []
+  let flights = data.data['Trips'][0]['Flights']
+  if (flights == undefined) {
+    return []
+  }
+  for (let i = 0; i < flights.length; i++) {
+    let products = flights[i]['Products']
     if (products[1]['UpgradeInfo'] &&
         products[1]['UpgradeInfo']['Available'] === true &&
         products[1]['UpgradeInfo']['Waitlisted'] === false) {
@@ -88,65 +35,146 @@ var parseResults = function (data) {
 }
 
 /**
- * Load, process, and return results for a given date
- */
-var loadResults = function (origin, destination, date, cb) {
-  var dateString = getDateString(date)
-  var options = {
-    url: getUrl(origin, destination, dateString),
-    headers: _.clone(headers),
-    method: 'POST'
-  }
-  options.headers['Referer'] = getReferer(origin, destination, dateString)
-  data = setData(formData, origin, destination, dateString)
-  options.json = data
-  request(options, function (error, response, body) {
-    var upgrades = []
-    if (!error) {
-      // update results
-      upgrades = parseResults(body)
-    }
-    finalResults.push({
-      date: date,
-      upgrades: upgrades,
-      error: error
-    })
-    return cb(error)
-  })
-}
-
-/**
- * Helper function for async call
- */
-var loadResultsByDate = function (date, cb) {
-  return loadResults(config.origin, config.destination, date, cb)
-}
-
-/**
  * Pretty print the results so that they are human readable
  */
-var printResults = function (result) {
+function printResults(result) {
   console.log('==============================')
   if (result.upgrades.length > 0) {
     console.log(getDateString(result.date).green.bold)
   } else {
     console.log(getDateString(result.date).red.bold)
   }
-  var templateFile = fs.readFileSync('united_template.ejs')
-  var template = _.template(templateFile)
-  for (var i = 0; i < result.upgrades.length; i++) {
+  let templateFile = fs.readFileSync('united_template.ejs')
+  let template = _.template(templateFile)
+  for (let i = 0; i < result.upgrades.length; i++) {
     console.log(template({ data: result.upgrades[i] }))
   }
 }
 
-var dates = []
-for (var d = new Date(config.start); d <= config.end; d.setDate(d.getDate() + 1)) {
-  dates.push(new Date(d))
+async function processDate(date) {
+    const browser = await puppeteer.launch()
+    function timeout(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    const page = await browser.newPage()
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36')
+    let results = null
+    let xhrRequests = 0
+    let ready = false
+    await page.goto('https://www.united.com/ual/en/us/flight-search/book-a-flight', {waitUntil: 'networkidle0'})
+
+    page.on('response', async msg => {
+      if (msg.request().resourceType == 'xhr') {
+        xhrRequests++
+        if (msg.request().url.startsWith('https://www.united.com/ual/en/us/default/autocomplete/affinityseach')) {
+          ready = true
+        }
+        if (msg.request().url == 'https://www.united.com/ual/en/us/flight-search/book-a-flight/flightshopping/getflightresults/rev') {
+          try {
+            const data = await msg.json()
+            results = parseResults(data)
+          }
+          catch (error) {}
+        }
+      }
+    })
+
+    await page.evaluate(() => {
+      const ow = document.querySelector("#TripTypes_ow")
+      ow.click()
+      document.querySelector("#Trips_0__NonStop").click()
+      document.querySelector("#Trips_0__OneStop").click()
+      document.querySelector("#Trips_0__TwoPlusStop").click()
+    })
+    await page.click('#TripTypes_ow')
+    await timeout(100)
+    await page.evaluate(function() {
+      document.querySelector('#Trips_0__Origin').value = ''
+      document.querySelector('#Trips_0__Destination').value = ''
+      document.querySelector('#Trips_0__DepartDate').value = ''
+    })
+    await timeout(100)
+    await page.type('#Trips_0__Origin', config.origin, {delay: 100})
+    await timeout(100)
+    await page.click('#fare-preference')
+    await timeout(100)
+    await page.type('#Trips_0__Destination', config.destination, {delay: 100})
+    await timeout(100)
+    await page.click('#fare-preference')
+    await timeout(100)
+    await page.type('#Trips_0__DepartDate', getDateString(date), {delay: 100})
+    await timeout(100)
+    await page.click('#fare-preference')
+    await timeout(100)
+    await page.select('#select-upgrade-type', 'MUA')
+    await timeout(100)
+    await page.click('#fare-preference')
+    await timeout(100)
+    await page.focus('#ClassofService')
+    await timeout(100)
+    // check if date is valid
+    let valid = await page.$eval('#Trips_0__DepartDate', el => el.getAttribute('aria-invalid'))
+    if (valid == 'true') {
+      console.log('INVALID DATE')
+      return []
+    }
+    while ((xhrRequests < 3) || (ready === false)) {
+      await timeout(500)
+    }
+    await timeout(1000)
+    await page.evaluate(() => {
+      const btn = document.querySelector("#btn-search")
+      btn.click()
+    })
+
+    let retries = 0
+    while (results === null && retries < 60) {
+      process.stdout.write('.')
+      await timeout(500)
+      retries++
+    }
+    if (retries == 120) {
+      console.log('TIMEOUT! ', getDateString(date))
+    }
+    await page.close()
+    await browser.close()
+    if (results === null) {
+      return []
+    }
+    // await timeout(2000)
+    return results
 }
 
-async.each(dates, loadResultsByDate, function (err) {
-  finalResults.sort(function (a,b) { return a.date - b.date })
-  for (var i = 0; i < finalResults.length; i++) {
-    printResults(finalResults[i])
+// set data based on args
+if (args.length < 4) {
+  console.log('Not enough arguments. Format: [ORG] [DST] [FRM] [TO]')
+  process.exit(1)
+}
+
+const config = {
+  origin: args[0],
+  destination: args[1],
+  start: new Date(args[2]),
+  end: new Date(args[3])
+}
+
+async function runDates() {
+  let dates = []
+  let promises = []
+  for (let d = new Date(config.start); d <= config.end; d.setDate(d.getDate() + 1)) {
+    let newDate = new Date(d)
+    dates.push(newDate)
+    promises.push(processDate(newDate))
   }
-})
+  Promise.all(promises).then(results => {
+    console.log('')
+    for (let i = 0; i < results.length; i++) {
+      printResults({
+        date: dates[i],
+        upgrades: results[i]
+      })
+    }
+  })
+}
+
+runDates()
